@@ -1,0 +1,10 @@
+spring:
+  data:
+    mongodb:
+      uri: ${MONGO_URI}
+      auto-index-creation: false
+
+logging:
+  level:
+    root: WARN
+    com.axis.hraiportal: INFO

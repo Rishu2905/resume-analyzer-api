@@ -1,0 +1,28 @@
+spring:
+  data:
+    mongodb:
+      uri: ${MONGO_URI}
+      auto-index-creation: true
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.autoconfigure.vectorstore.pinecone.PineconeVectorStoreAutoConfiguration
+
+supabase:
+  url: ${SUPABASE_URL:http://placeholder.supabase.co}
+  anon-key: ${SUPABASE_ANON_KEY:placeholder}
+  service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:placeholder}
+
+pinecone:
+  api-key: ${PINECONE_API_KEY:placeholder}
+  index-name: ${PINECONE_INDEX_NAME:placeholder}
+
+groq:
+  api-key: ${GROQ_API_KEY:placeholder}
+
+huggingface:
+  api-key: ${HUGGINGFACE_API_KEY:placeholder}
+
+logging:
+  level:
+    com.axis.hraiportal: DEBUG
+    org.springframework.data.mongodb: DEBUG
