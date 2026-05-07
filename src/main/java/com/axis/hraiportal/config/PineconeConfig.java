@@ -15,14 +15,14 @@ public class PineconeConfig {
 
     // Pinecone stores resume embeddings (float[768])
     // Each vector: { id: resumeId, values: float[], metadata: {candidateId} }
-    @Bean
+    @Bean("pinecone")
     public Pinecone pineconeClient(PineconeProperties props) {
         log.info("Initializing Pinecone client → index: {}",
                 props.getIndexName());
         return new Pinecone.Builder(props.getApiKey()).build();
     }
 
-    @Bean
+    @Bean("pineconeIndex")
     public Index pineconeIndex(Pinecone pinecone,
                                PineconeProperties props) {
         return pinecone.getIndexConnection(props.getIndexName());
