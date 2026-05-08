@@ -13,9 +13,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class SessionModel {
 
-    private String id;
-    private String userId;
-    private String token;
+    private String sessionId;       // session_id (uuid, PK)
+    private String hrId;            // hr_id (FK → hrs)
+    private String title;           // session title e.g. "Backend hiring Q2"
     private LocalDateTime createdAt;
-    private LocalDateTime expiresAt;
+    private LocalDateTime updatedAt;
 }

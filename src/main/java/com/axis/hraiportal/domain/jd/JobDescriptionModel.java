@@ -13,10 +13,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class JobDescriptionModel {
 
-    private String id;
-    private String title;
-    private String company;
-    private String requirements;      // full JD text — fed into HuggingFace for embedding
-    private String postedBy;          // HR user id
+    private String jdId;            // jd_id (uuid, PK)
+    private String sessionId;       // session_id (FK → sessions)
+    private String hrId;            // hr_id (FK → hrs)
+    private String title;           // job title e.g. "Senior Java Developer"
+    private String description;     // full JD text — fed into HuggingFace
     private LocalDateTime createdAt;
 }
