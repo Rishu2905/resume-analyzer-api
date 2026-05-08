@@ -20,5 +20,5 @@ public class PineconeProperties {
     private String namespace = "resumes";
 
     @Positive
-    private int dimension = 768;
+    private int dimension = 384;
 }
