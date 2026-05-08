@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -12,7 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Document(collection = "resumes")  // ← MongoDB collection name
+@Document(collection = "resumes")
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,16 +19,14 @@ import java.util.List;
 public class ResumeDocument {
 
     @Id
-    private String id;                    // MongoDB ObjectId
+    private String id;                // MongoDB ObjectId — this is the mongo_id
+    // stored in Supabase documents table
 
-    @Field("candidate_id")
-    private String candidateId;           // links to Supabase hr table
-
-    @Field("file_name")
-    private String fileName;
+    @Field("filename")
+    private String filename;          // mirrors documents.filename
 
     @Field("raw_text")
-    private String rawText;               // full extracted resume text
+    private String rawText;           // full extracted resume text
 
     @Field("skills")
     private List<String> skills;
@@ -41,9 +38,8 @@ public class ResumeDocument {
     private List<EducationEntry> education;
 
     @Field("pinecone_vector_id")
-    private String pineconeVectorId;      // links to Pinecone embedding
+    private String pineconeVectorId;
 
     @Field("uploaded_at")
-    @CreatedDate
     private LocalDateTime uploadedAt;
 }

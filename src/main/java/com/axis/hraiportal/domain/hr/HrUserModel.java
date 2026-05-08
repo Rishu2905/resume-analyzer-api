@@ -13,9 +13,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class HrUserModel {
 
-    private String id;
+    private String hrId;            // hr_id (uuid, PK)
     private String name;
     private String email;
-    private String role;             // "ADMIN" or "RECRUITER"
+    private String password;        // stored hashed — never plain text
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
