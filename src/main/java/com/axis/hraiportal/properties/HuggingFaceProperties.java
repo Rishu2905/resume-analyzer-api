@@ -20,7 +20,7 @@ public class HuggingFaceProperties {
     private String baseUrl = "https://api-inference.huggingface.co";
 
     private String embeddingModel =
-            "sentence-transformers/all-mpnet-base-v2";
+            "sentence-transformers/all-MiniLM-L6-v2";
 
     @DurationUnit(ChronoUnit.SECONDS)
     private Duration connectTimeout = Duration.ofSeconds(5);
