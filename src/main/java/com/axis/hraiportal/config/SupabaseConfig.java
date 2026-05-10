@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -19,21 +20,27 @@ import java.util.concurrent.TimeUnit;
 @EnableConfigurationProperties(SupabaseProperties.class)
 public class SupabaseConfig {
 
-    // Public client → respects Row Level Security (RLS)
-    // Use for: user-facing reads, session checks
     @Bean("supabasePublicClient")
-    public WebClient supabasePublicClient(SupabaseProperties props) {
-        return buildWebClient(props, props.getAnonKey());
+    public WebClient supabasePublicClient(
+            SupabaseProperties props,
+            ExchangeStrategies exchangeStrategies) {
+        return buildWebClient(props, props.getAnonKey(),
+                exchangeStrategies);
     }
 
-    // Admin client → bypasses RLS
-    // Use for: server-side writes, HR admin operations only
     @Bean("supabaseAdminClient")
-    public WebClient supabaseAdminClient(SupabaseProperties props) {
-        return buildWebClient(props, props.getServiceRoleKey());
+    public WebClient supabaseAdminClient(
+            SupabaseProperties props,
+            ExchangeStrategies exchangeStrategies) {
+        return buildWebClient(props, props.getServiceRoleKey(),
+                exchangeStrategies);
     }
 
-    private WebClient buildWebClient(SupabaseProperties props, String key) {
+    private WebClient buildWebClient(
+            SupabaseProperties props,
+            String key,
+            ExchangeStrategies exchangeStrategies) {
+
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
                         (int) props.getConnectTimeout().toMillis())
@@ -46,10 +53,12 @@ public class SupabaseConfig {
         return WebClient.builder()
                 .baseUrl(props.getUrl())
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .exchangeStrategies(exchangeStrategies)  // ← key line
                 .defaultHeader(HttpHeaders.CONTENT_TYPE,
                         MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader("apikey", key)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + key)
+                .defaultHeader(HttpHeaders.AUTHORIZATION,
+                        "Bearer " + key)
                 .defaultHeader("Prefer", "return=representation")
                 .build();
     }

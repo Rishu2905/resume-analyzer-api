@@ -19,40 +19,48 @@ public class HrService {
 
     // ── Register new HR user ─────────────────────────────────
     public Mono<HrUserModel> register(
-            String name, String email, String password) {
+            String name, String email, String password, String company) {
+        return hrRepository.findByEmail(email)
+                .flatMap(existingUsers -> {
+                    if (!existingUsers.isEmpty()) {
+                        return Mono.error(new RuntimeException(
+                                "Account with email " + email +
+                                        " already exists"));
+                    }
+                    HrUserModel newUser = HrUserModel.builder()
+                            .hrId(UUID.randomUUID().toString())
+                            .name(name)
+                            .email(email)
+                            .password(password)   // hash this before saving in real prod
+                            .company(company)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build();
 
-        HrUserModel newUser = HrUserModel.builder()
-                .hrId(UUID.randomUUID().toString())
-                .name(name)
-                .email(email)
-                .password(password)   // hash this before saving in real prod
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
-        return hrRepository.save(newUser)
-                .doOnSuccess(u -> log.info(
-                        "HR user registered: {}", u.getEmail()));
+                    return hrRepository.save(newUser)
+                            .doOnSuccess(u -> log.info(
+                                    "HR user registered: {}", u.getEmail()));
+                });
     }
 
     // ── Login — find by email, verify password ───────────────
-    public Mono<HrUserModel> login(
-            String email, String password) {
+        public Mono<HrUserModel> login(
+                String email, String password) {
 
-        return hrRepository.findByEmail(email)
-                .flatMap(list -> {
-                    if (list.isEmpty()) {
-                        return Mono.error(new RuntimeException(
-                                "HR user not found: " + email));
-                    }
-                    HrUserModel user = list.get(0);
-                    if (!user.getPassword().equals(password)) {
-                        return Mono.error(new RuntimeException(
-                                "Invalid password"));
-                    }
-                    return Mono.just(user);
-                });
-    }
+            return hrRepository.findByEmail(email)
+                    .flatMap(list -> {
+                        if (list.isEmpty()) {
+                            return Mono.error(new RuntimeException(
+                                    "No account found with email: " + email));
+                        }
+                        HrUserModel user = list.get(0);
+                        if (!user.getPassword().equals(password)) {
+                            return Mono.error(new RuntimeException(
+                                    "Incorrect password"));
+                        }
+                        return Mono.just(user);
+                    });
+        }
 
     // ── Get HR user by ID ────────────────────────────────────
     public Mono<HrUserModel> getById(String hrId) {
