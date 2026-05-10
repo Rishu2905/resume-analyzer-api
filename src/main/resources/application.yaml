@@ -7,6 +7,14 @@ spring:
     mongodb:
       auto-index-creation: false
 
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    serialization:
+      write-dates-as-timestamps: false    # ← fixes the timestamp array issue
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+
 management:
   endpoints:
     web:

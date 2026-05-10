@@ -1,5 +1,6 @@
 package com.axis.hraiportal.domain.hr;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,11 +13,24 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class HrUserModel {
+    @JsonProperty("hr_id")
+    private String hrId; // hr_id (uuid, PK)
 
-    private String hrId;            // hr_id (uuid, PK)
+    @JsonProperty("name")
     private String name;
+
+    @JsonProperty("email")
     private String email;
+
+    @JsonProperty("password")
     private String password;        // stored hashed — never plain text
+
+    @JsonProperty("company")
+    private String company;
+
+    @JsonProperty("created_at")
     private LocalDateTime createdAt;
+
+    @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
 }

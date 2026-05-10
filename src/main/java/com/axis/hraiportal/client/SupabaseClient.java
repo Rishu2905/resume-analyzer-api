@@ -71,9 +71,11 @@ public class SupabaseClient {
                         res.bodyToMono(String.class)
                                 .map(b -> new SupabaseException(
                                         res.statusCode(), b)))
-                .bodyToMono(responseType)
+                .bodyToFlux(responseType)   // ← changed from bodyToMono to bodyToFlux
+                .next()                     // ← takes first element from array
                 .doOnError(e -> log.error(
-                        "Supabase INSERT {} failed: {}", table, e.getMessage()));
+                        "Supabase INSERT {} failed: {}",
+                        table, e.getMessage()));
     }
 
     // ── UPDATE rows matching filter ──────────────────────────
