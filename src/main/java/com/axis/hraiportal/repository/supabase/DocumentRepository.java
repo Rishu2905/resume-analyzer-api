@@ -22,8 +22,8 @@ public class DocumentRepository {
     public Mono<DocumentRecord> save(DocumentRecord document) {
         return supabaseClient
                 .insert(TABLE, document, DocumentRecord.class)
-                .doOnSuccess(d -> log.info(
-                        "Saved document: {}", d.getDocumentId()));
+                .doOnSuccess(d -> log.debug(
+                        "Saved document: {}", d.getDocumentId()));                            // debug log
     }
 
     // ── Find by document ID ──────────────────────────────────

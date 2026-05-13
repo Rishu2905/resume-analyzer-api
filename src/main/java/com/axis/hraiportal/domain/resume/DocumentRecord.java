@@ -20,4 +20,7 @@ public class DocumentRecord {
     private String fileHash;        // hash to detect duplicates
     private String mongoId;         // links to ResumeDocument._id in MongoDB
     private LocalDateTime uploadedAt;
+    private String jobTitle;
+    private Integer score;
+
 }

@@ -19,14 +19,16 @@ import java.util.List;
 public class ResumeDocument {
 
     @Id
-    private String id;                // MongoDB ObjectId — this is the mongo_id
-    // stored in Supabase documents table
+    private String id;
 
     @Field("filename")
-    private String filename;          // mirrors documents.filename
+    private String filename;
 
-    @Field("raw_text")
-    private String rawText;           // full extracted resume text
+    @Field("contact")
+    private ContactInfo contact;
+
+    @Field("summary")
+    private String summary;
 
     @Field("skills")
     private List<String> skills;
@@ -34,11 +36,24 @@ public class ResumeDocument {
     @Field("experience")
     private List<ExperienceEntry> experience;
 
+    @Field("projects")
+    private List<ProjectEntry> projects;
+
     @Field("education")
     private List<EducationEntry> education;
 
-    @Field("pinecone_vector_id")
-    private String pineconeVectorId;
+    // scoring
+    @Field("score")
+    private Integer score;
+
+    @Field("matching_skills")
+    private List<String> matchingSkills;
+
+    @Field("gaps")
+    private List<String> gaps;
+
+    @Field("recommendation")
+    private String recommendation;
 
     @Field("uploaded_at")
     private LocalDateTime uploadedAt;

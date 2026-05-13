@@ -19,7 +19,7 @@ public interface ResumeRepository
     Optional<ResumeDocument> findByFilename(String filename);
 
     // find all resumes for a candidate
-    List<ResumeDocument> findByPineconeVectorId(String pineconeVectorId);
+    //List<ResumeDocument> findByPineconeVectorId(String pineconeVectorId);
 
     // check if resume already exists (duplicate detection)
     boolean existsByFilename(String filename);
