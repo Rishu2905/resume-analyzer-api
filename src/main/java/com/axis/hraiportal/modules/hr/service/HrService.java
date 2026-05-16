@@ -4,9 +4,10 @@ import com.axis.hraiportal.modules.hr.entity.HrUserModel;
 import com.axis.hraiportal.modules.hr.repository.HrRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-
+import com.axis.hraiportal.modules.hr.dtoresponse.hrResponse;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -16,9 +17,10 @@ import java.util.UUID;
 public class HrService {
 
     private final HrRepository hrRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // ── Register new HR user ─────────────────────────────────
-    public Mono<HrUserModel> register(
+    public Mono<hrResponse> register(
             String name, String email, String password, String company) {
         return hrRepository.findByEmail(email)
                 .flatMap(existingUsers -> {
@@ -27,19 +29,19 @@ public class HrService {
                                 "Account with email " + email +
                                         " already exists"));
                     }
+                    String hashedpassword=passwordEncoder.encode(password);
                     HrUserModel newUser = HrUserModel.builder()
                             .hrId(UUID.randomUUID().toString())
                             .name(name)
                             .email(email)
-                            .password(password)   // hash this before saving in real prod
+                            .password(hashedpassword)   // hash this before saving in real prod
                             .company(company)
                             .createdAt(LocalDateTime.now())
                             .updatedAt(LocalDateTime.now())
                             .build();
 
                     return hrRepository.save(newUser)
-                            .doOnSuccess(u -> log.info(
-                                    "HR user registered: {}", u.getEmail()));
+                           .map(saved->toResponse(saved));
                 });
     }
 
@@ -69,5 +71,13 @@ public class HrService {
                         ? Mono.error(new RuntimeException(
                         "HR user not found: " + hrId))
                         : Mono.just(list.get(0)));
+    }
+    private hrResponse toResponse(HrUserModel user){
+        return hrResponse.builder()
+                .hrId(user.getHrId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .company(user.getCompany())
+                .build();
     }
 }

@@ -1,5 +1,6 @@
 package com.axis.hraiportal.modules.hr.controller;
 
+import com.axis.hraiportal.modules.hr.dtoresponse.hrResponse;
 import com.axis.hraiportal.modules.hr.entity.HrUserModel;
 import com.axis.hraiportal.modules.hr.service.HrService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class HrController {
 
     // POST /api/hr/register
     @PostMapping("/register")
-    public Mono<ResponseEntity<HrUserModel>> register(
+    public Mono<ResponseEntity<hrResponse>> register(
             @RequestBody HrUserModel request) {
         return hrService
                 .register(

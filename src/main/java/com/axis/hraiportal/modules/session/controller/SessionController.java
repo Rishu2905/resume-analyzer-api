@@ -1,5 +1,6 @@
 package com.axis.hraiportal.modules.session.controller;
 
+import com.axis.hraiportal.modules.session.dtoresponse.rankingResponse;
 import com.axis.hraiportal.modules.session.entity.SessionModel;
 import com.axis.hraiportal.modules.session.service.SessionService;
 import lombok.RequiredArgsConstructor;
@@ -62,5 +63,13 @@ public class SessionController {
         return sessionService.deleteSession(sessionId)
                 .then(Mono.just(ResponseEntity
                         .<Void>noContent().build()));
+    }
+    // resume ranking response endpoint /api/{sessionId}/rankings
+    @GetMapping("/{sessionId}/rankings")
+    public  Mono<ResponseEntity<rankingResponse>> getRanking(
+            @PathVariable String sessionId
+    ){
+        return sessionService.getRanking(sessionId)
+                .map(ResponseEntity::ok);
     }
 }
