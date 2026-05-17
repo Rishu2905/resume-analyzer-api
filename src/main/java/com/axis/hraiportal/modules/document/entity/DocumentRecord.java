@@ -22,5 +22,6 @@ public class DocumentRecord {
     private LocalDateTime uploadedAt;
     private String jobTitle;
     private Integer score;
+    private String recommendation;
 
 }

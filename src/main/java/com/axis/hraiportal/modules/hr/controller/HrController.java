@@ -32,7 +32,7 @@ public class HrController {
 
     // POST /api/hr/login
     @PostMapping("/login")
-    public Mono<ResponseEntity<HrUserModel>> login(
+    public Mono<ResponseEntity<hrResponse>> login(
             @RequestBody HrUserModel request) {
         return hrService
                 .login(
@@ -43,7 +43,7 @@ public class HrController {
 
     // GET /api/hr/{hrId}
     @GetMapping("/{hrId}")
-    public Mono<ResponseEntity<HrUserModel>> getById(
+    public Mono<ResponseEntity<hrResponse>> getById(
             @PathVariable String hrId) {
         return hrService.getById(hrId)
                 .map(ResponseEntity::ok);

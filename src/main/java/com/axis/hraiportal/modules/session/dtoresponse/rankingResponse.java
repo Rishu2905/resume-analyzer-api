@@ -26,6 +26,6 @@ public class rankingResponse {
         private String filename;
         private String mongoId;
         private Integer score;
-       // private String recommendation;
+        private String recommendation;
     }
 }

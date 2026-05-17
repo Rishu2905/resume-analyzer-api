@@ -4,6 +4,7 @@ import com.axis.hraiportal.modules.document.repository.DocumentRepository;
 import com.axis.hraiportal.modules.session.dtoresponse.rankingResponse;
 import com.axis.hraiportal.modules.session.entity.SessionModel;
 import com.axis.hraiportal.modules.session.repository.SessionRepository;
+import com.axis.hraiportal.modules.document.entity.DocumentRecord;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -90,9 +91,10 @@ public class SessionService {
                                             .filename(d.getFilename())
                                             .mongoId(d.getMongoId())
                                             .score(d.getScore())
-                                            //.recommendation(d.getRecommendation())
+                                            .recommendation(d.getRecommendation())
                                             .build())
                             .collect(Collectors.toList());
+
                     String jobTitle = documents.isEmpty()
                             ? "N/A"
                             : documents.getFirst().getJobTitle();
