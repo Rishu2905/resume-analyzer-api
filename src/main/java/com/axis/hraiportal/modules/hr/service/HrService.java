@@ -46,7 +46,7 @@ public class HrService {
     }
 
     // ── Login — find by email, verify password ───────────────
-    public Mono<HrUserModel> login(
+    public Mono<hrResponse> login(
             String email, String password) {
 
         return hrRepository.findByEmail(email)
@@ -55,22 +55,22 @@ public class HrService {
                         return Mono.error(new RuntimeException(
                                 "No account found with email: " + email));
                     }
-                    HrUserModel user = list.get(0);
-                    if (!user.getPassword().equals(password)) {
+                    HrUserModel user = list.getFirst();
+                    if (!passwordEncoder.matches(password, user.getPassword())){
                         return Mono.error(new RuntimeException(
                                 "Incorrect password"));
                     }
-                    return Mono.just(user);
+                    return Mono.just(toResponse(user));
                 });
     }
 
     // ── Get HR user by ID ────────────────────────────────────
-    public Mono<HrUserModel> getById(String hrId) {
+    public Mono<hrResponse> getById(String hrId) {
         return hrRepository.findByHrId(hrId)
                 .flatMap(list -> list.isEmpty()
                         ? Mono.error(new RuntimeException(
                         "HR user not found: " + hrId))
-                        : Mono.just(list.get(0)));
+                        : Mono.just(toResponse(list.get(0))));
     }
     private hrResponse toResponse(HrUserModel user){
         return hrResponse.builder()

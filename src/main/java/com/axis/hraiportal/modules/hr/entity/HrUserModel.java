@@ -33,4 +33,5 @@ public class HrUserModel {
 
     @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
+
 }

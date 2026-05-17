@@ -91,6 +91,7 @@ public class DocumentService {
                                                 .mongoId(mongoId)
                                                 .jobTitle(jdTitle)
                                                 .score(saved.getScore())
+                                                .recommendation(saved.getRecommendation())
                                                 .uploadedAt(LocalDateTime.now())
                                                 .build();
 
