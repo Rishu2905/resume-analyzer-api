@@ -82,3 +82,5 @@ resilience4j:
       groq:
         max-attempts: 3
         wait-duration: 2s
+server:
+  port: ${PORT:8080}
