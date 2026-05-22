@@ -8,7 +8,7 @@ spring:
       - org.springframework.ai.autoconfigure.vectorstore.pinecone.PineconeVectorStoreAutoConfiguration
 
 supabase:
-  url: ${SUPABASE_URL:http://placeholder.supabase.co}
+  url: ${SUPABASE_URL}
   anon-key: ${SUPABASE_ANON_KEY:placeholder}
   service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:placeholder}
 
