@@ -22,6 +22,11 @@ public class DocumentController {
 
     private final DocumentService documentService;
 
+     @GetMapping("/")
+     public String greet(){
+         return "welcome";
+     }
+
     // POST /api/documents/upload
     // multipart/form-data — not JSON
     @PostMapping(
