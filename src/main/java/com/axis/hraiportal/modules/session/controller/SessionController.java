@@ -19,6 +19,7 @@ public class SessionController {
 
     private final SessionService sessionService;
 
+
     // POST /api/sessions
     @PostMapping
     public Mono<ResponseEntity<SessionModel>> createSession(
@@ -30,13 +31,12 @@ public class SessionController {
                 .map(ResponseEntity::ok);
     }
 
-    // GET /api/sessions/hr/{hrId}
     @GetMapping("/hr/{hrId}")
     public Mono<ResponseEntity<List<SessionModel>>> getByHr(
             @PathVariable String hrId) {
+
         return sessionService.getSessionsByHr(hrId)
-                .map(ResponseEntity::ok);
-    }
+                .map(ResponseEntity::ok);}
 
     // GET /api/sessions/{sessionId}
     @GetMapping("/{sessionId}")

@@ -1,5 +1,6 @@
 package com.axis.hraiportal.modules.hr.service;
 
+import com.axis.hraiportal.common.util.JwtUtil;
 import com.axis.hraiportal.modules.hr.entity.HrUserModel;
 import com.axis.hraiportal.modules.hr.repository.HrRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,8 @@ import reactor.core.publisher.Mono;
 import com.axis.hraiportal.modules.hr.dtoresponse.hrResponse;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import com.axis.hraiportal.modules.hr.dtoresponse.LoginResponse;
+
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +21,7 @@ public class HrService {
 
     private final HrRepository hrRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     // ── Register new HR user ─────────────────────────────────
     public Mono<hrResponse> register(
@@ -46,7 +50,7 @@ public class HrService {
     }
 
     // ── Login — find by email, verify password ───────────────
-    public Mono<hrResponse> login(
+    public Mono<LoginResponse> login(
             String email, String password) {
 
         return hrRepository.findByEmail(email)
@@ -55,12 +59,29 @@ public class HrService {
                         return Mono.error(new RuntimeException(
                                 "No account found with email: " + email));
                     }
+
                     HrUserModel user = list.getFirst();
-                    if (!passwordEncoder.matches(password, user.getPassword())){
+
+                    if (!passwordEncoder.matches(
+                            password, user.getPassword())) {
                         return Mono.error(new RuntimeException(
                                 "Incorrect password"));
                     }
-                    return Mono.just(toResponse(user));
+
+                    // generate JWT token
+                    String token = jwtUtil.generateToken(
+                            user.getHrId(), user.getEmail());
+
+//                    log.info("Login successful: {}", email);
+
+                    return Mono.just(LoginResponse.builder()
+                            .hrId(user.getHrId())
+                            .name(user.getName())
+                            .email(user.getEmail())
+                            .company(user.getCompany())
+                            .token(token)
+                            .tokenType("Bearer")
+                            .build());
                 });
     }
 
@@ -70,7 +91,7 @@ public class HrService {
                 .flatMap(list -> list.isEmpty()
                         ? Mono.error(new RuntimeException(
                         "HR user not found: " + hrId))
-                        : Mono.just(toResponse(list.get(0))));
+                        : Mono.just(toResponse(list.getFirst())));
     }
     private hrResponse toResponse(HrUserModel user){
         return hrResponse.builder()
