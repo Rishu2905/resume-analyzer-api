@@ -84,3 +84,7 @@ resilience4j:
         wait-duration: 2s
 server:
   port: ${PORT:8080}
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiry: ${JWT_EXPIRY:86400000}

@@ -1,5 +1,6 @@
 package com.axis.hraiportal.modules.hr.controller;
 
+import com.axis.hraiportal.modules.hr.dtoresponse.LoginResponse;
 import com.axis.hraiportal.modules.hr.dtoresponse.hrResponse;
 import com.axis.hraiportal.modules.hr.entity.HrUserModel;
 import com.axis.hraiportal.modules.hr.service.HrService;
@@ -32,16 +33,15 @@ public class HrController {
 
     // POST /api/hr/login
     @PostMapping("/login")
-    public Mono<ResponseEntity<hrResponse>> login(
+    public Mono<ResponseEntity<LoginResponse>> login(
             @RequestBody HrUserModel request) {
         return hrService
-                .login(
-                        request.getEmail(),
-                        request.getPassword())
+                .login(request.getEmail(), request.getPassword())
                 .map(ResponseEntity::ok);
     }
 
-    // GET /api/hr/{hrId}
+
+    //     GET /api/hr/{hrId}
     @GetMapping("/{hrId}")
     public Mono<ResponseEntity<hrResponse>> getById(
             @PathVariable String hrId) {

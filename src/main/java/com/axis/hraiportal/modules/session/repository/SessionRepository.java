@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class SessionRepository {
+public class  SessionRepository {
 
     private final SupabaseClient supabaseClient;
 
@@ -35,12 +35,13 @@ public class SessionRepository {
                 SessionModel.class);
     }
 
-    // ── Find all sessions for an HR user ─────────────────────
     public Mono<List<SessionModel>> findByHrId(String hrId) {
+
+
         return supabaseClient.getWithFilter(
-                TABLE,
-                "hr_id=eq." + hrId,
-                SessionModel.class);
+                        TABLE,
+                        "hr_id=eq." + hrId,
+                        SessionModel.class);
     }
 
     // ── Update session title ─────────────────────────────────

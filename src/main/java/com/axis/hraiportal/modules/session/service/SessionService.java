@@ -42,10 +42,10 @@ public class SessionService {
                         s.getSessionId(), hrId));
     }
 
-    // ── Get all sessions for an HR user ──────────────────────
     public Mono<List<SessionModel>> getSessionsByHr(
             String hrId) {
         return sessionRepository.findByHrId(hrId);
+
     }
 
     // ── Get single session ───────────────────────────────────
