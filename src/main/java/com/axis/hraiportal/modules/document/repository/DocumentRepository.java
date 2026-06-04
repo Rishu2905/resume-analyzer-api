@@ -2,6 +2,7 @@ package com.axis.hraiportal.modules.document.repository;
 
 import com.axis.hraiportal.common.client.SupabaseClient;
 import com.axis.hraiportal.modules.document.entity.DocumentRecord;
+import com.axis.hraiportal.modules.jobdescription.entity.JobDescriptionModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -55,17 +56,18 @@ public class DocumentRepository {
     }
 
     // ── Find all documents uploaded by an HR user ────────────
-    public Mono<List<DocumentRecord>> findByHrId(String hrId) {
+    public Mono<List<DocumentRecord>> findByUserId(String userId) {
         return supabaseClient.getWithFilter(
                 TABLE,
-                "hr_id=eq." + hrId,
+                "hr_id=eq." + userId,
                 DocumentRecord.class);
     }
-
+    // update this method, instead of deleting set is_deleted=True
     // ── Delete a document record ─────────────────────────────
     public Mono<Void> deleteByDocumentId(String documentId) {
         return supabaseClient.delete(
                 TABLE,
                 "document_id=eq." + documentId);
     }
+
 }

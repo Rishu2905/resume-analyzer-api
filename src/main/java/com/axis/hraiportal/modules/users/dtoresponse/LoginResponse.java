@@ -1,4 +1,4 @@
-package com.axis.hraiportal.modules.hr.dtoresponse;
+package com.axis.hraiportal.modules.users.dtoresponse;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LoginResponse {
 
-    @JsonProperty("hr_id")
-    private String hrId;
+    @JsonProperty("user_id")
+    private String userId;
 
     @JsonProperty("name")
     private String name;

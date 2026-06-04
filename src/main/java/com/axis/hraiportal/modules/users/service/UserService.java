@@ -1,32 +1,32 @@
-package com.axis.hraiportal.modules.hr.service;
+package com.axis.hraiportal.modules.users.service;
 
 import com.axis.hraiportal.common.util.JwtUtil;
-import com.axis.hraiportal.modules.hr.entity.HrUserModel;
-import com.axis.hraiportal.modules.hr.repository.HrRepository;
+import com.axis.hraiportal.modules.users.entity.UserModel;
+import com.axis.hraiportal.modules.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import com.axis.hraiportal.modules.hr.dtoresponse.hrResponse;
+import com.axis.hraiportal.modules.users.dtoresponse.UserResponse;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import com.axis.hraiportal.modules.hr.dtoresponse.LoginResponse;
+import com.axis.hraiportal.modules.users.dtoresponse.LoginResponse;
 
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class HrService {
+public class UserService {
 
-    private final HrRepository hrRepository;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
     // ── Register new HR user ─────────────────────────────────
-    public Mono<hrResponse> register(
-            String name, String email, String password, String company) {
-        return hrRepository.findByEmail(email)
+    public Mono<UserResponse> register(
+            String name, String email, String password, String company,String role) {
+        return userRepository.findByEmail(email)
                 .flatMap(existingUsers -> {
                     if (!existingUsers.isEmpty()) {
                         return Mono.error(new RuntimeException(
@@ -34,17 +34,18 @@ public class HrService {
                                         " already exists"));
                     }
                     String hashedpassword=passwordEncoder.encode(password);
-                    HrUserModel newUser = HrUserModel.builder()
-                            .hrId(UUID.randomUUID().toString())
+                    UserModel newUser = UserModel.builder()
+                            .userId(UUID.randomUUID().toString())
                             .name(name)
                             .email(email)
-                            .password(hashedpassword)   // hash this before saving in real prod
+                            .password(hashedpassword)
                             .company(company)
                             .createdAt(LocalDateTime.now())
                             .updatedAt(LocalDateTime.now())
+                            .role(role)
                             .build();
 
-                    return hrRepository.save(newUser)
+                    return userRepository.save(newUser)
                            .map(saved->toResponse(saved));
                 });
     }
@@ -53,14 +54,14 @@ public class HrService {
     public Mono<LoginResponse> login(
             String email, String password) {
 
-        return hrRepository.findByEmail(email)
+        return userRepository.findByEmail(email)
                 .flatMap(list -> {
                     if (list.isEmpty()) {
                         return Mono.error(new RuntimeException(
                                 "No account found with email: " + email));
                     }
 
-                    HrUserModel user = list.getFirst();
+                    UserModel user = list.getFirst();
 
                     if (!passwordEncoder.matches(
                             password, user.getPassword())) {
@@ -70,12 +71,12 @@ public class HrService {
 
                     // generate JWT token
                     String token = jwtUtil.generateToken(
-                            user.getHrId(), user.getEmail());
+                            user.getUserId(), user.getEmail(), user.getRole());
 
 //                    log.info("Login successful: {}", email);
 
                     return Mono.just(LoginResponse.builder()
-                            .hrId(user.getHrId())
+                            .userId(user.getUserId())
                             .name(user.getName())
                             .email(user.getEmail())
                             .company(user.getCompany())
@@ -85,17 +86,34 @@ public class HrService {
                 });
     }
 
-    // ── Get HR user by ID ────────────────────────────────────
-    public Mono<hrResponse> getById(String hrId) {
-        return hrRepository.findByHrId(hrId)
-                .flatMap(list -> list.isEmpty()
-                        ? Mono.error(new RuntimeException(
-                        "HR user not found: " + hrId))
-                        : Mono.just(toResponse(list.getFirst())));
+    // ─────────────────────────────────────────────
+// GET AUTHENTICATED HR PROFILE
+// ─────────────────────────────────────────────
+    public Mono<UserResponse> getById(
+            String userId) {
+
+        return userRepository
+
+                .findByHrId(userId)
+
+                .flatMap(list -> {
+
+                    if (list.isEmpty()) {
+
+                        return Mono.error(
+                                new RuntimeException(
+                                        "HR user not found"));
+                    }
+
+                    return Mono.just(
+                            toResponse(
+                                    list.getFirst()));
+                });
     }
-    private hrResponse toResponse(HrUserModel user){
-        return hrResponse.builder()
-                .hrId(user.getHrId())
+
+    private UserResponse toResponse(UserModel user){
+        return UserResponse.builder()
+                .userId(user.getUserId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .company(user.getCompany())

@@ -20,12 +20,13 @@ public class JwtUtil {
     private long expiry;
 
     // ── Generate token on login ──────────────────────────────
-    public String generateToken(String hrId, String email) {
+    public String generateToken(String userId, String email, String role) {
         SecretKey key = getSigningKey();
 
         return Jwts.builder()
-                .subject(hrId)
+                .subject(userId)
                 .claim("email", email)
+                .claim("role",role)
                 .issuedAt(new Date())
                 .expiration(new Date(
                         System.currentTimeMillis() + expiry))
@@ -51,6 +52,15 @@ public class JwtUtil {
                 .parseSignedClaims(token)
                 .getPayload()
                 .get("email", String.class);
+    }
+    // ── Extract role from token ─────────────────────────────
+    public String extractRole(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role", String.class);
     }
 
     // ── Validate token ───────────────────────────────────────

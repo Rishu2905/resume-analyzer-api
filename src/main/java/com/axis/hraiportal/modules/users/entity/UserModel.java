@@ -1,4 +1,4 @@
-package com.axis.hraiportal.modules.hr.entity;
+package com.axis.hraiportal.modules.users.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -12,9 +12,9 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class HrUserModel {
-    @JsonProperty("hr_id")
-    private String hrId; // hr_id (uuid, PK)
+public class UserModel {
+    @JsonProperty("user_id")
+    private String userId; // hr_id (uuid, PK)
 
     @JsonProperty("name")
     private String name;
@@ -33,5 +33,10 @@ public class HrUserModel {
 
     @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
+
+    private String role;
+    @JsonProperty("is_deleted")
+
+    private Boolean isDeleted = false;
 
 }

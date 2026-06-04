@@ -14,7 +14,7 @@ import java.util.List;
 public class DocumentResponse {
     private String documentId;
     private String sessionId;
-    private String hrId;
+    private String userId;
     private String filename;
     private String mongoId;
     private Integer score;

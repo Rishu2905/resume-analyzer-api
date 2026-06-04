@@ -1,6 +1,8 @@
 package com.axis.hraiportal.common.client;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
@@ -13,6 +15,8 @@ import java.util.List;
 @Component
 @Slf4j
 public class SupabaseClient {
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private final WebClient publicClient;
     private final WebClient adminClient;
@@ -63,6 +67,8 @@ public class SupabaseClient {
     // ── INSERT a row ─────────────────────────────────────────
     public <T> Mono<T> insert(
             String table, Object body, Class<T> responseType) {
+
+
         return adminClient.post()
                 .uri("/rest/v1/" + table)
                 .bodyValue(body)
@@ -90,7 +96,8 @@ public class SupabaseClient {
                         res.bodyToMono(String.class)
                                 .map(b -> new SupabaseException(
                                         res.statusCode(), b)))
-                .bodyToMono(responseType)
+                .bodyToFlux(responseType)
+                .next()
                 .doOnError(e -> log.error(
                         "Supabase UPDATE {} failed: {}", table, e.getMessage()));
     }

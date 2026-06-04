@@ -28,8 +28,8 @@ public class SecurityConfig {
 
                 .authorizeExchange(auth -> auth
                         .pathMatchers(
-                                "/api/hr/register",
-                                "/api/hr/login",
+                                "/api/register",
+                                "/api/login",
                                 "/actuator/health"
                         ).permitAll()
 
