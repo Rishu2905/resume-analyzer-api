@@ -4,7 +4,6 @@ import com.axis.hraiportal.modules.document.repository.DocumentRepository;
 import com.axis.hraiportal.modules.session.dtoresponse.rankingResponse;
 import com.axis.hraiportal.modules.session.entity.SessionModel;
 import com.axis.hraiportal.modules.session.repository.SessionRepository;
-import com.axis.hraiportal.modules.document.entity.DocumentRecord;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,85 +23,184 @@ public class SessionService {
     private final SessionRepository sessionRepository;
     private final DocumentRepository documentRepository;
 
-    // ── Create a new session ─────────────────────────────────
+    // ─────────────────────────────────────────────
+    // CREATE NEW SESSION
+    // ─────────────────────────────────────────────
     public Mono<SessionModel> createSession(
-            String hrId, String title) {
+            String userId,
+            String title) {
 
         SessionModel session = SessionModel.builder()
                 .sessionId(UUID.randomUUID().toString())
-                .hrId(hrId)
+                .userId(userId)
                 .title(title)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
+                .deleted(false)
                 .build();
 
         return sessionRepository.save(session)
                 .doOnSuccess(s -> log.info(
                         "Session created: {} for HR: {}",
-                        s.getSessionId(), hrId));
+                        s.getSessionId(),
+                        userId));
     }
 
+
+    // ─────────────────────────────────────────────
+    // GET ALL SESSIONS OF HR
+    // ─────────────────────────────────────────────
     public Mono<List<SessionModel>> getSessionsByHr(
-            String hrId) {
-        return sessionRepository.findByHrId(hrId);
+            String userId) {
 
+        return sessionRepository.findByHrId(userId);
     }
 
-    // ── Get single session ───────────────────────────────────
-    public Mono<SessionModel> getById(String sessionId) {
-        return sessionRepository.findBySessionId(sessionId)
-                .flatMap(list -> list.isEmpty()
-                        ? Mono.error(new RuntimeException(
-                        "Session not found: " + sessionId))
-                        : Mono.just(list.get(0)));
-    }
 
-    // ── Update session title ─────────────────────────────────
-    public Mono<SessionModel> updateTitle(
-            String sessionId, String newTitle) {
+    // ─────────────────────────────────────────────
+    // GET SINGLE SESSION
+    // ─────────────────────────────────────────────
+    public Mono<SessionModel> getById(
+            String userId,
+            String sessionId) {
 
-        return getById(sessionId)
-                .flatMap(existing -> {
-                    existing.setTitle(newTitle);
-                    existing.setUpdatedAt(LocalDateTime.now());
-                    return sessionRepository.updateTitle(
-                            sessionId, existing);
+        // first get all sessions of this HR
+        return sessionRepository
+
+                .findByHrIdAndSessionId(userId,sessionId)
+
+                .flatMap(list -> {
+
+                    // no sessions for this HR
+                    if (list.isEmpty()) {
+
+                        return Mono.error(
+                                new RuntimeException(
+                                        "No sessions found for HR"));
+                    }
+
+                    // find matching session inside HR-owned sessions
+                    return list.stream()
+
+                            .filter(session ->
+                                    session.getSessionId()
+                                            .equals(sessionId))
+
+                            .findFirst()
+
+                            .map(Mono::just)
+
+                            .orElseGet(() ->
+                                    Mono.error(
+                                            new RuntimeException(
+                                                    "Session not found or access denied")));
                 });
     }
 
-    // ── Delete session ───────────────────────────────────────
-    public Mono<Void> deleteSession(String sessionId) {
-        return sessionRepository.deleteBySessionId(sessionId)
-                .doOnSuccess(v -> log.info(
-                        "Session deleted: {}", sessionId));
+
+    // ─────────────────────────────────────────────
+    // UPDATE SESSION TITLE
+    // ─────────────────────────────────────────────
+    public Mono<SessionModel> updateTitle(
+            String sessionId,
+            String userId,
+            String newTitle) {
+
+        return getById(sessionId, userId)
+
+                .flatMap(existing -> {
+
+                    existing.setTitle(newTitle);
+
+                    existing.setUpdatedAt(
+                            LocalDateTime.now());
+
+                    return sessionRepository
+                            .updateTitle(
+                                    sessionId,
+                                    existing);
+                });
     }
 
-    // getRanking function
-    public Mono<rankingResponse> getRanking(String sessionId){
-        return documentRepository.findBySessionId(sessionId)
-                .map(documents->{
+
+    // ─────────────────────────────────────────────
+    // DELETE SESSION
+    // ─────────────────────────────────────────────
+    public Mono<Void> deleteSession(
+            String sessionId,
+            String userId) {
+
+        return getById(sessionId, userId)
+
+                .flatMap(existing ->
+                        sessionRepository
+                                .deleteBySessionId(
+                                        sessionId))
+
+                .doOnSuccess(v -> log.info(
+                        "Session deleted: {}",
+                        sessionId));
+    }
+
+
+    // ─────────────────────────────────────────────
+    // GET SESSION RANKINGS
+    // ─────────────────────────────────────────────
+    public Mono<rankingResponse> getRanking(
+            String sessionId,
+            String userId) {
+
+        // validate ownership first
+        return getById(sessionId, userId)
+
+                .flatMap(session ->
+                        documentRepository
+                                .findBySessionId(sessionId))
+
+                .map(documents -> {
+
                     var ranked = documents.stream()
-                            .sorted(Comparator.comparingInt(
-                                    d -> -d.getScore()))
+
+                            .sorted(
+                                    Comparator.comparingInt(
+                                            d -> -d.getScore()))
+
                             .map(d ->
-                                    rankingResponse.RankedResume
+                                    rankingResponse
+                                            .RankedResume
                                             .builder()
-                                            .documentId(d.getDocumentId())
-                                            .filename(d.getFilename())
-                                            .mongoId(d.getMongoId())
-                                            .score(d.getScore())
-                                            .recommendation(d.getRecommendation())
+                                            .documentId(
+                                                    d.getDocumentId())
+                                            .filename(
+                                                    d.getFilename())
+                                            .mongoId(
+                                                    d.getMongoId())
+                                            .score(
+                                                    d.getScore())
+                                            .recommendation(
+                                                    d.getRecommendation())
                                             .build())
+
                             .collect(Collectors.toList());
 
-                    String jobTitle = documents.isEmpty()
-                            ? "N/A"
-                            : documents.getFirst().getJobTitle();
-                    return rankingResponse.builder()                   //for building final API response
+                    String jobTitle =
+                            documents.isEmpty()
+                                    ? "N/A"
+                                    : documents
+                                      .getFirst()
+                                      .getJobTitle();
+
+                    return rankingResponse.builder()
+
                             .sessionId(sessionId)
+
                             .jobTitle(jobTitle)
-                            .totalResumes(documents.size())
+
+                            .totalResumes(
+                                    documents.size())
+
                             .rankings(ranked)
+
                             .build();
                 });
     }

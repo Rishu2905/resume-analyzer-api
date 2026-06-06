@@ -12,12 +12,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,83 +37,156 @@ public class DocumentService {
 
     // ── Main upload pipeline ─────────────────────────────────
     public Mono<DocumentResponse> uploadResume(
-            String sessionId, String hrId,
-            MultipartFile file, String jobTitle) {
+
+            String userId,
+
+            String sessionId,
+
+            MultipartFile file,
+
+            String jobTitle) {
 
         // Step 1 — extract text from PDF
-        String rawText = pdfExtractorUtil.extractText(file);
-        String fileHash = pdfExtractorUtil.generateHash(file);
-        String filename = file.getOriginalFilename();
+        String rawText =
+                pdfExtractorUtil.extractText(file);
 
-        log.debug("Processing resume: {}", filename);                          // debug log
+        String fileHash =
+                pdfExtractorUtil.generateHash(file);
 
-        // Step 2 — fetch JD from session
-        return jdRepository.findBySessionId(sessionId)
-                .flatMap(jds -> {
-                    if (jds.isEmpty()) {
-                        return Mono.error(new RuntimeException(
-                                "No JD found for session: " + sessionId +
-                                        ". Please create a JD before uploading resumes."));
-                    }
+        String filename =
+                file.getOriginalFilename();
 
-                    var jd = jds.getFirst();
-                    String jdTitle = jd.getTitle(); // chatgpt fix
-                    String jobDescription = jd.getDescription();
+        log.debug("Processing resume: {}",
+                filename);
 
-                    log.debug("Comparing against JD: {}", jdTitle);                // debug log
+        // Step 2 — validate ownership + fetch JD
+        return jdRepository
 
-                    // Step 3 — one Groq call: parse + score
+                .findAuthorizedJd(
+                        userId,
+                        sessionId)
+
+                .flatMap(jd -> {
+
+                    String jdTitle =
+                            jd.getTitle();
+
+                    String jobDescription =
+                            jd.getDescription();
+
+                    log.debug(
+                            "Comparing against JD: {}",
+                            jdTitle);
+
+                    // Step 3 — one Groq call:
+                    // parse + score
                     return groqClient.complete(
+
                                     buildSystemPrompt(),
-                                    buildUserPrompt(rawText, jdTitle, jobDescription))
+
+                                    buildUserPrompt(
+                                            rawText,
+                                            jdTitle,
+                                            jobDescription))
 
                             .flatMap(groqResponse -> {
 
                                 // Step 4 — parse Groq JSON response
                                 ResumeDocument resumeDoc =
+
                                         parseGroqResponse(
-                                                groqResponse, filename);
+                                                groqResponse,
+                                                filename);
 
                                 // Step 5 — save to MongoDB
                                 ResumeDocument saved =
-                                        resumeRepository.save(resumeDoc);
-                                String mongoId = saved.getId();
-                                log.debug("Resume saved to MongoDB: {}",           // debug log
+                                        resumeRepository
+                                                .save(resumeDoc);
+
+                                String mongoId =
+                                        saved.getId();
+
+                                log.debug(
+                                        "Resume saved to MongoDB: {}",
                                         mongoId);
 
                                 // Step 6 — save metadata to Supabase
                                 DocumentRecord record =
+
                                         DocumentRecord.builder()
+
                                                 .documentId(
-                                                        UUID.randomUUID().toString())
-                                                .sessionId(sessionId)
-                                                .hrId(hrId)
-                                                .filename(filename)
-                                                .fileHash(fileHash)
-                                                .mongoId(mongoId)
-                                                .jobTitle(jdTitle)
-                                                .score(saved.getScore())
-                                                .recommendation(saved.getRecommendation())
-                                                .uploadedAt(LocalDateTime.now())
+                                                        UUID.randomUUID()
+                                                                .toString())
+
+                                                .sessionId(
+                                                        sessionId)
+
+                                                .userId(
+                                                        userId)
+
+                                                .filename(
+                                                        filename)
+
+                                                .fileHash(
+                                                        fileHash)
+
+                                                .mongoId(
+                                                        mongoId)
+
+                                                .jobTitle(
+                                                        jdTitle)
+
+                                                .score(
+                                                        saved.getScore())
+
+                                                .recommendation(
+                                                        saved.getRecommendation())
+
+                                                .uploadedAt(
+                                                        LocalDateTime.now())
+
                                                 .build();
 
-                                return documentRepository.save(record)
+                                return documentRepository
+                                        .save(record)
+
                                         .map(savedRecord ->
-                                                DocumentResponse.builder()
+
+                                                DocumentResponse
+                                                        .builder()
+
                                                         .documentId(
-                                                                savedRecord.getDocumentId())
-                                                        .sessionId(sessionId)
-                                                        .hrId(hrId)
-                                                        .filename(filename)
-                                                        .mongoId(mongoId)
-                                                        .score(saved.getScore())
+                                                                savedRecord
+                                                                        .getDocumentId())
+
+                                                        .sessionId(
+                                                                sessionId)
+
+                                                        .userId(
+                                                                userId)
+
+                                                        .filename(
+                                                                filename)
+
+                                                        .mongoId(
+                                                                mongoId)
+
+                                                        .score(
+                                                                saved.getScore())
+
                                                         .matchingSkills(
                                                                 saved.getMatchingSkills())
-                                                        .gaps(saved.getGaps())
+
+                                                        .gaps(
+                                                                saved.getGaps())
+
                                                         .recommendation(
                                                                 saved.getRecommendation())
-                                                        .message("Resume processed " +
-                                                                "and scored successfully")
+
+                                                        .message(
+                                                                "Resume processed and scored successfully")
+
                                                         .build());
                             });
                 });
@@ -308,16 +383,62 @@ public class DocumentService {
                 ? node.get(field).asText("") : "";
     }
 
-    // ── Get documents by session ─────────────────────────────
+    // ─────────────────────────────────────────────
+// GET DOCUMENTS BY SESSION
+// ─────────────────────────────────────────────
     public Mono<List<DocumentRecord>> getBySession(
+
+            String userId,
+
             String sessionId) {
-        return documentRepository.findBySessionId(sessionId);
+
+        // validate ownership first
+        return jdRepository
+
+                .findAuthorizedJd(
+                        userId,
+                        sessionId)
+
+                .flatMap(jd ->
+                        documentRepository
+                                .findBySessionId(
+                                        sessionId));
     }
 
-    // ── Get full resume analysis from MongoDB ─────────────────
-    public ResumeDocument getAnalysis(String mongoId) {
-        return resumeRepository.findById(mongoId)
-                .orElseThrow(() -> new RuntimeException(
-                        "Resume not found: " + mongoId));
+    // ── Get full analysis for session ────────────────────────
+// verifies session belongs to user
+// fetches all resumes sorted by score DESC
+    public Mono<List<ResumeDocument>> getAnalysis(
+            String userId, String sessionId) {
+
+        // Step 1 — verify session belongs to this user
+        return jdRepository.findAuthorizedJd(userId, sessionId)
+
+                .flatMap(jd ->
+                        // Step 2 — fetch all document records from Supabase
+                        documentRepository.findBySessionId(sessionId))
+
+                .flatMap(documents -> {
+                    if (documents.isEmpty()) {
+                        return Mono.just(List.of());
+                    }
+
+                    // Step 3 — extract mongoIds
+                    List<String> mongoIds = documents.stream()
+                            .sorted(Comparator.comparingInt(
+                                    d -> -d.getScore()))  // sort by score DESC
+                            .map(DocumentRecord::getMongoId)
+                            .toList();
+
+                    // Step 4 — fetch full resume data from MongoDB
+                    List<ResumeDocument> resumes = mongoIds.stream()
+                            .map(mongoId -> resumeRepository
+                                    .findById(mongoId)
+                                    .orElse(null))
+                            .filter(resume -> resume != null)
+                            .toList();
+
+                    return Mono.just(resumes);
+                });
     }
 }

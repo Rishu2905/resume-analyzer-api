@@ -47,10 +47,10 @@ public class JobDescriptionRepository {
 
     // ── Find all JDs posted by an HR user ────────────────────
     public Mono<List<JobDescriptionModel>> findByHrId(
-            String hrId) {
+            String userId) {
         return supabaseClient.getWithFilter(
                 TABLE,
-                "hr_id=eq." + hrId,
+                "user_id=eq." + userId,
                 JobDescriptionModel.class);
     }
 
@@ -59,5 +59,58 @@ public class JobDescriptionRepository {
         return supabaseClient.delete(
                 TABLE,
                 "jd_id=eq." + jdId);
+    }
+
+    // updateJd function
+    public Mono<JobDescriptionModel> updateJd(String jdId,JobDescriptionModel jd){
+        return supabaseClient.update(
+                TABLE,"jd_id=eq." + jdId, jd,
+                JobDescriptionModel.class);
+    }
+
+    // Authorization method
+    // ─────────────────────────────────────────────
+// FIND AUTHORIZED JD
+// validates:
+// 1. session belongs to HR
+// 2. JD belongs to session
+// ─────────────────────────────────────────────
+    public Mono<JobDescriptionModel> findAuthorizedJd(
+
+            String userId,
+
+            String sessionId) {
+
+        String filter =
+
+                "select=*," +
+                        "sessions!inner(hr_id)" +
+
+                        "&session_id=eq." + sessionId +
+
+                        "&sessions.hr_id=eq." + userId;
+
+        return supabaseClient
+
+                .getWithFilter(
+
+                        TABLE,
+
+                        filter,
+
+                        JobDescriptionModel.class)
+
+                .flatMap(list -> {
+
+                    if (list.isEmpty()) {
+
+                        return Mono.error(
+                                new RuntimeException(
+                                        "Unauthorized session or JD not found"));
+                    }
+
+                    return Mono.just(
+                            list.getFirst());
+                });
     }
 }

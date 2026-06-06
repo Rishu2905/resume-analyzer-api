@@ -1,7 +1,7 @@
-package com.axis.hraiportal.modules.hr.repository;
+package com.axis.hraiportal.modules.users.repository;
 
 import com.axis.hraiportal.common.client.SupabaseClient;
-import com.axis.hraiportal.modules.hr.entity.HrUserModel;
+import com.axis.hraiportal.modules.users.entity.UserModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -12,43 +12,43 @@ import java.util.List;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class HrRepository {
+public class UserRepository {
 
     private final SupabaseClient supabaseClient;
 
-    private static final String TABLE = "hrs";
+    private static final String TABLE = "users";
 
     // ── Register a new HR user ───────────────────────────────
-    public Mono<HrUserModel> save(HrUserModel hrUser) {
+    public Mono<UserModel> save(UserModel hrUser) {
         return supabaseClient
-                .insert(TABLE, hrUser, HrUserModel.class)
+                .insert(TABLE, hrUser, UserModel.class)
                 .doOnSuccess(h -> log.info(
                         "Registered HR user: {}", h.getEmail()));
     }
 
     // ── Find HR user by ID ───────────────────────────────────
-    public Mono<List<HrUserModel>> findByHrId(String hrId) {
+    public Mono<List<UserModel>> findByHrId(String userId) {
         return supabaseClient.getWithFilter(
                 TABLE,
-                "hr_id=eq." + hrId,
-                HrUserModel.class);
+                "user_id=eq." + userId,
+                UserModel.class);
     }
 
     // ── Find HR user by email (used for login) ───────────────
-    public Mono<List<HrUserModel>> findByEmail(String email) {
+    public Mono<List<UserModel>> findByEmail(String email) {
         return supabaseClient.getWithFilter(
                 TABLE,
                 "email=eq." + email,
-                HrUserModel.class);
+                UserModel.class);
     }
 
     // ── Update HR user ───────────────────────────────────────
-    public Mono<HrUserModel> update(
-            String hrId, HrUserModel updated) {
+    public Mono<UserModel> update(
+            String userId, UserModel updated) {
         return supabaseClient.update(
                 TABLE,
-                "hr_id=eq." + hrId,
+                "user_id=eq." + userId,
                 updated,
-                HrUserModel.class);
+                UserModel.class);
     }
 }

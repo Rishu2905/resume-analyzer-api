@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -49,13 +50,20 @@ public class JwtAuthenticationFilter implements WebFilter {
             return exchange.getResponse().setComplete();
         }
 
-        // Step 5 — extract hrId
-        String hrId = jwtUtil.extractHrId(token);
+        // Step 5 — extract hrId, Email and Role
+        String userId = jwtUtil.extractHrId(token);
+        String email=jwtUtil.extractEmail(token);
+        String role=jwtUtil.extractRole(token);
 
         // Step 6 — create authentication
         UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(
-                        hrId, null, Collections.emptyList());
+                        userId, null, Collections.emptyList());
+        //Step 6 only storing hrId in security context that will be fwd to the controller
+        //so instead of asking user their credentials we extract it from JWT token itself
+        // nd nxt line is storing all that
+        SecurityContextImpl context =
+                new SecurityContextImpl(auth);
 
         // Step 7 — set in reactive security context
         return chain.filter(exchange)

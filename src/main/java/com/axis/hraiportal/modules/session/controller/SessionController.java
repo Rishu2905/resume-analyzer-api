@@ -3,11 +3,13 @@ package com.axis.hraiportal.modules.session.controller;
 import com.axis.hraiportal.modules.session.dtoresponse.rankingResponse;
 import com.axis.hraiportal.modules.session.entity.SessionModel;
 import com.axis.hraiportal.modules.session.service.SessionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 
 import java.util.List;
 
@@ -21,55 +23,152 @@ public class SessionController {
 
 
     // POST /api/sessions
+    // ─────────────────────────────────────────────
+// CREATE SESSION
+// POST /api/sessions
+// ─────────────────────────────────────────────
     @PostMapping
     public Mono<ResponseEntity<SessionModel>> createSession(
-            @RequestBody SessionModel request) {
-        return sessionService
-                .createSession(
-                        request.getHrId(),
-                        request.getTitle())
+            @Valid @RequestBody SessionModel request) {
+
+        return ReactiveSecurityContextHolder
+                .getContext()
+
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(userId ->
+                        sessionService.createSession(
+                                userId,
+                                request.getTitle()))
+
                 .map(ResponseEntity::ok);
     }
 
-    @GetMapping("/hr/{hrId}")
-    public Mono<ResponseEntity<List<SessionModel>>> getByHr(
-            @PathVariable String hrId) {
 
-        return sessionService.getSessionsByHr(hrId)
-                .map(ResponseEntity::ok);}
+    // ─────────────────────────────────────────────
+// GET ALL SESSIONS OF AUTHENTICATED HR
+// GET /api/sessions/hr
+// ─────────────────────────────────────────────
+    @GetMapping("/my-sessions")
+    public Mono<ResponseEntity<List<SessionModel>>> getByHr() {
 
-    // GET /api/sessions/{sessionId}
+        return ReactiveSecurityContextHolder
+                .getContext()
+                // context variable coming from JwtAuthenticationFilter file
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(sessionService::getSessionsByHr)
+
+                .map(ResponseEntity::ok);
+    }
+
+
+    // ─────────────────────────────────────────────
+// GET SESSION BY ID
+// GET /api/sessions/{sessionId}
+// ─────────────────────────────────────────────
     @GetMapping("/{sessionId}")
     public Mono<ResponseEntity<SessionModel>> getById(
             @PathVariable String sessionId) {
-        return sessionService.getById(sessionId)
+
+        return ReactiveSecurityContextHolder
+                .getContext()
+
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(hrId ->
+                        sessionService.getById(hrId,
+                                sessionId))
+
                 .map(ResponseEntity::ok);
     }
 
-    // PATCH /api/sessions/{sessionId}
+
+    // ─────────────────────────────────────────────
+// UPDATE SESSION TITLE
+// PATCH /api/sessions/{sessionId}
+// ─────────────────────────────────────────────
     @PatchMapping("/{sessionId}")
     public Mono<ResponseEntity<SessionModel>> updateTitle(
             @PathVariable String sessionId,
             @RequestBody SessionModel request) {
-        return sessionService
-                .updateTitle(sessionId, request.getTitle())
+
+        return ReactiveSecurityContextHolder
+                .getContext()
+
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(userId ->
+                        sessionService.updateTitle(
+                                sessionId,
+                                userId,
+                                request.getTitle()))
+
                 .map(ResponseEntity::ok);
     }
 
-    // DELETE /api/sessions/{sessionId}
+
+    // ─────────────────────────────────────────────
+// DELETE SESSION
+// DELETE /api/sessions/{sessionId}
+// ─────────────────────────────────────────────
     @DeleteMapping("/{sessionId}")
     public Mono<ResponseEntity<Void>> deleteSession(
             @PathVariable String sessionId) {
-        return sessionService.deleteSession(sessionId)
-                .then(Mono.just(ResponseEntity
-                        .<Void>noContent().build()));
+
+        return ReactiveSecurityContextHolder
+                .getContext()
+
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(userId ->
+                        sessionService.deleteSession(
+                                sessionId,
+                                userId))
+
+                .then(Mono.just(
+                        ResponseEntity
+                                .<Void>noContent()
+                                .build()));
     }
-    // resume ranking response endpoint /api/{sessionId}/rankings
+
+
+    // ─────────────────────────────────────────────
+// GET SESSION RANKINGS
+// GET /api/sessions/{sessionId}/rankings
+// ─────────────────────────────────────────────
     @GetMapping("/{sessionId}/rankings")
-    public  Mono<ResponseEntity<rankingResponse>> getRanking(
-            @PathVariable String sessionId
-    ){
-        return sessionService.getRanking(sessionId)
+    public Mono<ResponseEntity<rankingResponse>> getRanking(
+            @PathVariable String sessionId) {
+
+        return ReactiveSecurityContextHolder
+                .getContext()
+
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(userId ->
+                        sessionService.getRanking(
+                                sessionId,
+                                userId))
+
                 .map(ResponseEntity::ok);
     }
 }

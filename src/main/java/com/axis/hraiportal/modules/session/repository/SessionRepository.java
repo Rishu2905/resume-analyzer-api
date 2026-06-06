@@ -20,6 +20,7 @@ public class  SessionRepository {
 
     // ── Create a new session ─────────────────────────────────
     public Mono<SessionModel> save(SessionModel session) {
+        log.info("Session being saved: {}", session);
         return supabaseClient
                 .insert(TABLE, session, SessionModel.class)
                 .doOnSuccess(s -> log.info(
@@ -34,13 +35,22 @@ public class  SessionRepository {
                 "session_id=eq." + sessionId,
                 SessionModel.class);
     }
+    public Mono<List<SessionModel>> findByHrIdAndSessionId(
+            String userId,
+            String sessionId) {
 
-    public Mono<List<SessionModel>> findByHrId(String hrId) {
+        return supabaseClient.getWithFilter(
+                TABLE,
+                "user_id=eq." + userId +
+                        "&session_id=eq." + sessionId,
+                SessionModel.class);
+    }
+    public Mono<List<SessionModel>> findByHrId(String userId) {
 
 
         return supabaseClient.getWithFilter(
                         TABLE,
-                        "hr_id=eq." + hrId,
+                        "user_id=eq." + userId,
                         SessionModel.class);
     }
 

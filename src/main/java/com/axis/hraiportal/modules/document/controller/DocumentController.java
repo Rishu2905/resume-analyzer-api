@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
@@ -22,42 +24,100 @@ public class DocumentController {
 
     private final DocumentService documentService;
 
-     @GetMapping("/")
-     public String greet(){
-         return "welcome";
-     }
-
     // POST /api/documents/upload
     // multipart/form-data — not JSON
+    // ─────────────────────────────────────────────
+// UPLOAD RESUME
+// POST /api/documents/upload
+// ─────────────────────────────────────────────
     @PostMapping(
             value = "/upload",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public Mono<ResponseEntity<DocumentResponse>> uploadResume(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("session_id") String sessionId,
-            @RequestParam("hr_id") String hrId,
-            @RequestParam("job_title") String jobTitle)
-    {
+    public Mono<ResponseEntity<DocumentResponse>>
+    uploadResume(
 
-        return documentService
-                .uploadResume(sessionId, hrId, file,jobTitle)
+            @RequestParam("file")
+            MultipartFile file,
+
+            @RequestParam("session_id")
+            String sessionId,
+
+            @RequestParam("job_title")
+            String jobTitle) {
+        log.debug("controller hit");
+
+        return ReactiveSecurityContextHolder
+                .getContext()
+
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(userId ->
+                        documentService.uploadResume(
+
+                                userId,
+
+                                sessionId,
+
+                                file,
+
+                                jobTitle))
+
                 .map(ResponseEntity::ok);
     }
 
-    // GET /api/documents/session/{sessionId}
+    // ─────────────────────────────────────────────
+// GET DOCUMENTS BY SESSION
+// GET /api/documents/session/{sessionId}
+// ─────────────────────────────────────────────
     @GetMapping("/session/{sessionId}")
     public Mono<ResponseEntity<List<DocumentRecord>>>
-    getBySession(@PathVariable String sessionId) {
-        return documentService.getBySession(sessionId)
+    getBySession(
+
+            @PathVariable String sessionId) {
+
+        return ReactiveSecurityContextHolder
+                .getContext()
+
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(hrId ->
+                        documentService.getBySession(
+                                hrId,
+                                sessionId))
+
                 .map(ResponseEntity::ok);
     }
 
-    // GET /api/documents/{mongoId}/analysis
-    @GetMapping("/{mongoId}/analysis")
-    public ResponseEntity<ResumeDocument> getAnalysis(
-            @PathVariable String mongoId) {
-        return ResponseEntity.ok(
-                documentService.getAnalysis(mongoId));
+    // ─────────────────────────────────────────────
+// GET SESSION ANALYSIS
+// GET /api/documents/session/{sessionId}/analysis
+// ─────────────────────────────────────────────
+    @GetMapping("/session/{sessionId}/analysis")
+    public Mono<ResponseEntity<List<ResumeDocument>>>
+    getAnalysis(
+
+            @PathVariable String sessionId) {
+
+        return ReactiveSecurityContextHolder
+                .getContext()
+
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(hrId ->
+                        documentService.getAnalysis(
+                                hrId,
+                                sessionId))
+
+                .map(ResponseEntity::ok);
     }
 }

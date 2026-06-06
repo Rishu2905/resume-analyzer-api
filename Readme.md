@@ -64,7 +64,7 @@ Data
 
 Workflow:
 
-* HR creates session
+* USERS creates session
 * Job description stored
 * Resume uploaded
 * PDF text extracted
@@ -100,7 +100,7 @@ common/
 
 modules/
 
-├── hr/
+├── users/
 ├── session/
 ├── document/
 ├── resume/
@@ -124,17 +124,18 @@ module/
 ### HR
 
 Purpose:
-Stores HR users.
+Stores users.
 
 Fields:
 
-* hrId
+* userId
 * name
 * email
 * password
 * company
 * createdAt
 * updatedAt
+* is_deleted
 
 ---
 
@@ -146,13 +147,14 @@ Hiring campaign.
 Fields:
 
 * sessionId
-* hrId
+* userId
 * title
 * createdAt
+* is_deleted
 
 Relationship:
 
-HR
+users
 └── many Sessions
 
 ---
@@ -168,6 +170,7 @@ Fields:
 * sessionId
 * title
 * content
+* is_deleted
 
 Relationship:
 
@@ -185,7 +188,7 @@ Fields:
 
 * documentId
 * sessionId
-* hrId
+* userId
 * filename
 * fileHash
 * mongoId
@@ -193,6 +196,7 @@ Fields:
 * jobTitle
 * score
 * recommendation
+* is_deleted
 
 Relationship:
 
@@ -235,19 +239,19 @@ Stores extracted and analyzed resume content.
 
 # 5. API Documentation
 
-## HR APIs
+## USER APIs
 
-POST /api/hr/register
+POST /api/register
 
-* Register HR
+* Register USER
 
-POST /api/hr/login
+POST /api/login
 
-* Login HR
+* Login USER
 
-GET /api/hr/{id}
+GET /api/me/{id}
 
-* Get HR details
+* Get USER details
 
 ---
 
@@ -261,7 +265,7 @@ GET /api/sessions/hr/{hrId}
 
 * Sessions for HR
 
-GET /api/sessions/{sessionId}
+GET /api/sessions/my-sessions
 
 * Get session
 
@@ -286,7 +290,7 @@ Multipart request:
 
 * file
 * session_id
-* hr_id
+* user_id
 * job_title
 
 Uploads and analyzes resume.
@@ -314,7 +318,7 @@ Create and manage JDs tied to sessions.
 
 ## Resume Upload Flow
 
-1. HR uploads PDF
+1. USER uploads PDF
 2. DocumentController receives request
 3. DocumentService processes upload
 4. PdfExtractorUtil extracts text
@@ -345,13 +349,13 @@ Create and manage JDs tied to sessions.
 
 # 7. Service Responsibilities
 
-## HrService
+## UserService
 
 Responsibilities:
 
 * Register user
 * Login user
-* Retrieve HR profile
+* Retrieve user profile
 
 ---
 
@@ -439,7 +443,7 @@ Document model is flexible.
 
 Workflow entities are relational:
 
-* HR
+* Users
 * Sessions
 * Documents
 * Job Descriptions
@@ -476,7 +480,7 @@ Allows non-blocking operations and easier scalability.
 
 # 10. Business Rules
 
-1. Every Session belongs to one HR.
+1. Every Session belongs to one USER.
 
 2. Every Document belongs to one Session.
 
@@ -498,7 +502,7 @@ Allows non-blocking operations and easier scalability.
 
 9. Job descriptions are session-specific.
 
-10. HR users only manage their own sessions and documents.
+10. Users only manage their own sessions and documents.
 
 ---
 

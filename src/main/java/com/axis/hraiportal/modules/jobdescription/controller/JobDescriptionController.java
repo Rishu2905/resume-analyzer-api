@@ -2,9 +2,11 @@ package com.axis.hraiportal.modules.jobdescription.controller;
 
 import com.axis.hraiportal.modules.jobdescription.entity.JobDescriptionModel;
 import com.axis.hraiportal.modules.jobdescription.service.JobDescriptionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -18,41 +20,123 @@ public class JobDescriptionController {
 
     private final JobDescriptionService jdService;
 
-    // POST /api/jd
+    // ─────────────────────────────────────────────
+// CREATE JOB DESCRIPTION
+// POST /api/jd
+// ─────────────────────────────────────────────
     @PostMapping
     public Mono<ResponseEntity<JobDescriptionModel>> createJd(
-            @RequestBody JobDescriptionModel request) {
-        return jdService
-                .createJd(
-                        request.getSessionId(),
-                        request.getHrId(),
-                        request.getTitle(),
-                        request.getDescription())
+
+            @Valid @RequestBody JobDescriptionModel request) {
+
+        return ReactiveSecurityContextHolder
+                .getContext()
+
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(userId ->
+                        jdService.createJd(
+
+                                userId,
+
+                                request.getSessionId(),
+
+                                request.getTitle(),
+
+                                request.getDescription()))
+
                 .map(ResponseEntity::ok);
     }
 
-    // GET /api/jd/session/{sessionId}
+    // ─────────────────────────────────────────────
+// GET JD BY SESSION
+// GET /api/jd/session/{sessionId}
+// ─────────────────────────────────────────────
     @GetMapping("/session/{sessionId}")
     public Mono<ResponseEntity<List<JobDescriptionModel>>>
-    getBySession(@PathVariable String sessionId) {
-        return jdService.getBySession(sessionId)
+    getBySession(
+
+            @PathVariable String sessionId) {
+
+        return ReactiveSecurityContextHolder
+                .getContext()
+
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(userId ->
+                        jdService.getBySession(
+                                userId,
+                                sessionId))
+
                 .map(ResponseEntity::ok);
     }
 
-    // GET /api/jd/{jdId}
-    @GetMapping("/{jdId}")
-    public Mono<ResponseEntity<JobDescriptionModel>> getById(
-            @PathVariable String jdId) {
-        return jdService.getById(jdId)
+    // ─────────────────────────────────────────────
+// UPDATE JD
+// PATCH /api/jd/{jdId}
+// ─────────────────────────────────────────────
+    @PatchMapping("/{jdId}")
+    public Mono<ResponseEntity<JobDescriptionModel>> updateJd(
+
+            @PathVariable String jdId,
+
+            @RequestBody JobDescriptionModel request) {
+
+        return ReactiveSecurityContextHolder
+                .getContext()
+
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(userId ->
+                        jdService.updateJd(
+
+                                userId,
+
+                                jdId,
+
+                                request.getTitle(),
+
+                                request.getDescription()))
+
                 .map(ResponseEntity::ok);
     }
 
-    // DELETE /api/jd/{jdId}
+
+
+    // ─────────────────────────────────────────────
+// DELETE JD
+// DELETE /api/jd/{jdId}
+// ─────────────────────────────────────────────
     @DeleteMapping("/{jdId}")
     public Mono<ResponseEntity<Void>> deleteJd(
+
             @PathVariable String jdId) {
-        return jdService.deleteJd(jdId)
-                .then(Mono.just(ResponseEntity
-                        .<Void>noContent().build()));
+
+        return ReactiveSecurityContextHolder
+                .getContext()
+
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(userId ->
+                        jdService.deleteJd(
+                                userId,
+                                jdId))
+
+                .then(Mono.just(
+                        ResponseEntity
+                                .<Void>noContent()
+                                .build()));
     }
 }
