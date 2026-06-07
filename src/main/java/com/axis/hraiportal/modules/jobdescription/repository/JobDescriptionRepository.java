@@ -80,27 +80,27 @@ public class JobDescriptionRepository {
             String userId,
 
             String sessionId) {
+//        log.debug("entered findAuthorisedJd fn in JDRepo");
 
-        String filter =
-
-                "select=*," +
-                        "sessions!inner(hr_id)" +
-
-                        "&session_id=eq." + sessionId +
-
-                        "&sessions.hr_id=eq." + userId;
 
         return supabaseClient
+
 
                 .getWithFilter(
 
                         TABLE,
+                        "session_id=eq." +sessionId+
+                                "&user_id=eq." +userId,
 
-                        filter,
 
                         JobDescriptionModel.class)
 
+
                 .flatMap(list -> {
+//                    log.debug(
+//                            "Validating JD ownership: sessionId={}, userId={}",
+//                            sessionId,
+//                            userId);
 
                     if (list.isEmpty()) {
 

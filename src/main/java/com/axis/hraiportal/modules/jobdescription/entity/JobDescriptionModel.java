@@ -16,7 +16,7 @@ public class JobDescriptionModel {
 
     private String jdId;            // jd_id (uuid, PK)
     private String sessionId;       // session_id (FK → sessions)
-    private String userId;            // hr_id (FK → hrs)
+    private String userId;            // user_id (FK → hrs)
     private String title;           // job title e.g. "Senior Java Developer"
     private String description;     // full JD text — fed into HuggingFace
     private LocalDateTime createdAt;

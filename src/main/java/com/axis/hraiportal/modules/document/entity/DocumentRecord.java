@@ -1,5 +1,6 @@
 package com.axis.hraiportal.modules.document.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,5 +24,7 @@ public class DocumentRecord {
     private String jobTitle;
     private Integer score;
     private String recommendation;
+    @JsonProperty("is_deleted")
+    private boolean deleted;
 
 }

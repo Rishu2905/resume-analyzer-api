@@ -5,7 +5,7 @@ import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
+import java.security.MessageDigest;
 
 import java.io.IOException;
 
@@ -14,16 +14,11 @@ import java.io.IOException;
 public class PdfExtractorUtil {
 
     // Extracts raw text from uploaded PDF file
-    public String extractText(MultipartFile file) {
-        try {
-            byte[] bytes = file.getBytes();
-            try (PDDocument document = Loader.loadPDF(bytes)) {
+    public String extractText(byte[] pdfBytes) {
+        try (PDDocument document = Loader.loadPDF(pdfBytes)){
                 PDFTextStripper stripper = new PDFTextStripper();
-                String text = stripper.getText(document);
-                log.debug("Extracted {} characters from PDF: {}",   // debug log
-                        text.length(), file.getOriginalFilename());
-                return text;
-            }
+                 return stripper.getText(document);
+
         } catch (IOException e) {
             log.error("Failed to extract text from PDF: {}",
                     e.getMessage());
@@ -33,21 +28,36 @@ public class PdfExtractorUtil {
     }
 
     // Generates a simple hash for duplicate detection
-    public String generateHash(MultipartFile file) {
+    public String generateHash(byte[] pdfBytes) {
+
         try {
-            byte[] bytes = file.getBytes();
-            java.security.MessageDigest md =
-                    java.security.MessageDigest.getInstance("MD5");
-            byte[] hash = md.digest(bytes);
-            StringBuilder sb = new StringBuilder();
+
+            MessageDigest md =
+                    MessageDigest.getInstance("MD5");
+
+            byte[] hash = md.digest(pdfBytes);
+
+            StringBuilder sb =
+                    new StringBuilder();
+
             for (byte b : hash) {
-                sb.append(String.format("%02x", b));
+
+                sb.append(
+                        String.format(
+                                "%02x",
+                                b));
             }
+
             return sb.toString();
+
         } catch (Exception e) {
-            log.error("Failed to generate hash: {}",
+
+            log.error(
+                    "Failed to generate hash: {}",
                     e.getMessage());
-            return String.valueOf(file.getSize());
+
+            return String.valueOf(
+                    pdfBytes.length);
         }
     }
 }

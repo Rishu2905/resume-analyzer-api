@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,31 +43,47 @@ public class DocumentService {
 
             String sessionId,
 
-            MultipartFile file,
+            FilePart file,
 
             String jobTitle) {
 
-        // Step 1 — extract text from PDF
-        String rawText =
-                pdfExtractorUtil.extractText(file);
+        return DataBufferUtils
 
-        String fileHash =
-                pdfExtractorUtil.generateHash(file);
+                .join(file.content())
 
-        String filename =
-                file.getOriginalFilename();
+                .flatMap(dataBuffer -> {
 
-        log.debug("Processing resume: {}",
-                filename);
+                            byte[] pdfBytes =
+                                    new byte[dataBuffer.readableByteCount()];
+
+                            dataBuffer.read(pdfBytes);
+
+                            DataBufferUtils.release(dataBuffer);
+
+                            String rawText =
+                                    pdfExtractorUtil.extractText(pdfBytes);
+
+                            String fileHash =
+                                    pdfExtractorUtil.generateHash(pdfBytes);
+
+                            String filename =
+                                    file.filename();
+
+//                            log.debug(
+//                                    "Processing resume: {}",
+//                                    filename);
 
         // Step 2 — validate ownership + fetch JD
         return jdRepository
+
 
                 .findAuthorizedJd(
                         userId,
                         sessionId)
 
+
                 .flatMap(jd -> {
+//                    log.debug("reached step 2 in document service");
 
                     String jdTitle =
                             jd.getTitle();
@@ -74,9 +91,9 @@ public class DocumentService {
                     String jobDescription =
                             jd.getDescription();
 
-                    log.debug(
-                            "Comparing against JD: {}",
-                            jdTitle);
+//                    log.debug(
+//                            "Comparing against JD: {}",
+//                            jdTitle);
 
                     // Step 3 — one Groq call:
                     // parse + score
@@ -106,9 +123,9 @@ public class DocumentService {
                                 String mongoId =
                                         saved.getId();
 
-                                log.debug(
-                                        "Resume saved to MongoDB: {}",
-                                        mongoId);
+//                                log.debug(
+//                                        "Resume saved to MongoDB: {}",
+//                                        mongoId);
 
                                 // Step 6 — save metadata to Supabase
                                 DocumentRecord record =
@@ -190,6 +207,7 @@ public class DocumentService {
                                                         .build());
                             });
                 });
+                });
     }
 
     // ── System prompt ────────────────────────────────────────
@@ -262,7 +280,8 @@ public class DocumentService {
             - score is 0-100
             - matching_skills: skills in resume that match JD
             - gaps: important skills in JD missing from resume
-            - recommendation: one sentence hiring recommendation
+            - recommendation: whats the candidates ideal job type,is he fit for the job
+            uploaded in JD?
             """.formatted(jobTitle, jobDescription, rawText);
     }
 
@@ -402,7 +421,7 @@ public class DocumentService {
                 .flatMap(jd ->
                         documentRepository
                                 .findBySessionId(
-                                        sessionId));
+                                        sessionId,userId));
     }
 
     // ── Get full analysis for session ────────────────────────
@@ -416,7 +435,7 @@ public class DocumentService {
 
                 .flatMap(jd ->
                         // Step 2 — fetch all document records from Supabase
-                        documentRepository.findBySessionId(sessionId))
+                        documentRepository.findBySessionId(sessionId,userId))
 
                 .flatMap(documents -> {
                     if (documents.isEmpty()) {

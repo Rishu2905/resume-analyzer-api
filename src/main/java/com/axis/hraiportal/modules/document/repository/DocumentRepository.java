@@ -22,9 +22,9 @@ public class DocumentRepository {
     // ── Save a new document record ───────────────────────────
     public Mono<DocumentRecord> save(DocumentRecord document) {
         return supabaseClient
-                .insert(TABLE, document, DocumentRecord.class)
-                .doOnSuccess(d -> log.debug(
-                        "Saved document: {}", d.getDocumentId()));            // debug log
+                .insert(TABLE, document, DocumentRecord.class);
+//                .doOnSuccess(d -> log.debug(
+//                        "Saved document: {}", d.getDocumentId()));            // debug log
     }
 
     // ── Find by document ID ──────────────────────────────────
@@ -38,10 +38,10 @@ public class DocumentRepository {
 
     // ── Find all documents in a session ─────────────────────
     public Mono<List<DocumentRecord>> findBySessionId(
-            String sessionId) {
+            String sessionId,String userId) {
         return supabaseClient.getWithFilter(
                 TABLE,
-                "session_id=eq." + sessionId,
+                "session_id=eq." + sessionId+"&user_id=eq."+userId,
                 DocumentRecord.class);
     }
 
