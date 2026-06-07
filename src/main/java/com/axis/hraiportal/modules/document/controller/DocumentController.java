@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,15 +38,15 @@ public class DocumentController {
     public Mono<ResponseEntity<DocumentResponse>>
     uploadResume(
 
-            @RequestParam("file")
-            MultipartFile file,
+            @RequestPart("file")
+            FilePart file,
 
-            @RequestParam("session_id")
+            @RequestPart("session_id")
             String sessionId,
 
-            @RequestParam("job_title")
+            @RequestPart("job_title")
             String jobTitle) {
-        log.debug("controller hit");
+//        log.debug("controller hit");
 
         return ReactiveSecurityContextHolder
                 .getContext()

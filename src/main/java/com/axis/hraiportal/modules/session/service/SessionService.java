@@ -155,7 +155,7 @@ public class SessionService {
 
                 .flatMap(session ->
                         documentRepository
-                                .findBySessionId(sessionId))
+                                .findBySessionId(sessionId,userId))
 
                 .map(documents -> {
 

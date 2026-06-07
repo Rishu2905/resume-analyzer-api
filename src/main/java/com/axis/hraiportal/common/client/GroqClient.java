@@ -56,11 +56,11 @@ public class GroqClient {
                 .map(json -> json
                         .path("choices").get(0)
                         .path("message")
-                        .path("content").asText())
-                .doOnSuccess(r -> log.debug(
-                        "Groq completion success, length={}", r.length()))     // debug log
-                .doOnError(e -> log.error(
-                        "Groq completion failed: {}", e.getMessage()));
+                        .path("content").asText());
+//                .doOnSuccess(r -> log.debug(
+//                        "Groq completion success, length={}", r.length()))     // debug log
+//                .doOnError(e -> log.error(
+//                        "Groq completion failed: {}", e.getMessage()));
     }
 
     // ── Fallback when circuit is open ────────────────────────

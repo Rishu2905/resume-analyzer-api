@@ -78,25 +78,31 @@ Workflow:
 # 3. Folder Structure
 
 common/
+
 ├── client/
 │   ├── GroqClient
 │   └── SupabaseClient
+
 │
 ├── config/
 │   ├── SecurityConfig
 │   ├── MongoConfig
 │   ├── GroqConfig
 │   └── SupabaseConfig
+
 │
 ├── properties/
 │   ├── GroqProperties
 │   └── SupabaseProperties
+
 │
 ├── exception/
 │   └── GlobalExceptionHandler
+
 │
 └── util/
 └── PdfExtractorUtil
+
 
 modules/
 
@@ -105,6 +111,7 @@ modules/
 ├── document/
 ├── resume/
 └── jobdescription/
+
 
 Pattern per module:
 
@@ -249,7 +256,7 @@ POST /api/login
 
 * Login USER
 
-GET /api/me/{id}
+GET /api/me/
 
 * Get USER details
 
@@ -261,7 +268,7 @@ POST /api/sessions
 
 * Create session
 
-GET /api/sessions/hr/{hrId}
+GET /api/sessions/users/{hrId}
 
 * Sessions for HR
 
@@ -277,9 +284,7 @@ DELETE /api/sessions/{sessionId}
 
 * Delete session
 
-GET /api/sessions/{sessionId}/rankings
 
-* Get ranked resumes
 
 ---
 
@@ -369,6 +374,8 @@ Responsibilities:
 * Delete session
 * Generate rankings
 
+validation of incoming IDs done before hitting actual service
+
 ---
 
 ## DocumentService
@@ -381,6 +388,8 @@ Responsibilities:
 * Save metadata
 * Retrieve analysis
 
+validation of incoming IDs done before hitting actual service
+
 ---
 
 ## JobDescriptionService
@@ -390,6 +399,8 @@ Responsibilities:
 * Store JDs
 * Retrieve JDs
 * Associate JD with session
+
+validation of incoming IDs done before hitting actual service
 
 ---
 

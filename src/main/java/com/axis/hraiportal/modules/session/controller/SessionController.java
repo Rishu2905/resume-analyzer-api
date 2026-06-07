@@ -152,23 +152,23 @@ public class SessionController {
 // GET SESSION RANKINGS
 // GET /api/sessions/{sessionId}/rankings
 // ─────────────────────────────────────────────
-    @GetMapping("/{sessionId}/rankings")
-    public Mono<ResponseEntity<rankingResponse>> getRanking(
-            @PathVariable String sessionId) {
-
-        return ReactiveSecurityContextHolder
-                .getContext()
-
-                .map(context ->
-                        context.getAuthentication()
-                                .getPrincipal()
-                                .toString())
-
-                .flatMap(userId ->
-                        sessionService.getRanking(
-                                sessionId,
-                                userId))
-
-                .map(ResponseEntity::ok);
-    }
+//    @GetMapping("/{sessionId}/rankings")
+//    public Mono<ResponseEntity<rankingResponse>> getRanking(
+//            @PathVariable String sessionId) {
+//
+//        return ReactiveSecurityContextHolder
+//                .getContext()
+//
+//                .map(context ->
+//                        context.getAuthentication()
+//                                .getPrincipal()
+//                                .toString())
+//
+//                .flatMap(userId ->
+//                        sessionService.getRanking(
+//                                sessionId,
+//                                userId))
+//
+//                .map(ResponseEntity::ok);
+//    }
 }
