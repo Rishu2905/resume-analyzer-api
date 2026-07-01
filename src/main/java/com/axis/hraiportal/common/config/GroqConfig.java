@@ -33,4 +33,10 @@ public class GroqConfig {
                         "Bearer " + props.getApiKey())
                 .build();
     }
+    @Bean
+    public WebClient aiServiceWebClient() {
+        return WebClient.builder()
+                .defaultHeader("Content-Type", "application/json")
+                .build();
+    }
 }

@@ -1,5 +1,6 @@
 package com.axis.hraiportal.modules.users.controller;
 
+import com.axis.hraiportal.modules.users.dtoresponse.CandidateResponse;
 import com.axis.hraiportal.modules.users.dtoresponse.LoginResponse;
 import com.axis.hraiportal.modules.users.dtoresponse.UserResponse;
 import com.axis.hraiportal.modules.users.entity.UserModel;
@@ -7,6 +8,7 @@ import com.axis.hraiportal.modules.users.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -38,7 +40,7 @@ public class UserController {
     public Mono<ResponseEntity<LoginResponse>> login(
             @RequestBody UserModel request) {
         return userService
-                .login(request.getEmail(), request.getPassword())
+                .login(request.getEmail(), request.getPassword(), request.getRole())
                 .map(ResponseEntity::ok);
     }
 
@@ -48,8 +50,10 @@ public class UserController {
 // GET AUTHENTICATED HR PROFILE
 // GET /api/hr/me
 // ─────────────────────────────────────────────
+    @PreAuthorize("hasRole('recruiter')")
     @GetMapping("/me")
     public Mono<ResponseEntity<UserResponse>> getById() {
+
 
         return ReactiveSecurityContextHolder
                 .getContext()
@@ -63,4 +67,20 @@ public class UserController {
 
                 .map(ResponseEntity::ok);
     }
+
+    @GetMapping("/candidate/me")
+    public Mono<ResponseEntity<CandidateResponse>> getCandidateById(){
+        return ReactiveSecurityContextHolder
+                .getContext()
+
+                .map(context ->
+                        context.getAuthentication()
+                                .getPrincipal()
+                                .toString())
+
+                .flatMap(userService::getCandidateById)
+
+                .map(ResponseEntity::ok);
+    }
+
 }

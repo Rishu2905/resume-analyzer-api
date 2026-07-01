@@ -1,6 +1,9 @@
 package com.axis.hraiportal.modules.users.service;
 
 import com.axis.hraiportal.common.util.JwtUtil;
+import com.axis.hraiportal.modules.document.entity.DocumentRecord;
+import com.axis.hraiportal.modules.document.repository.DocumentRepository;
+import com.axis.hraiportal.modules.users.dtoresponse.CandidateResponse;
 import com.axis.hraiportal.modules.users.entity.UserModel;
 import com.axis.hraiportal.modules.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +13,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import com.axis.hraiportal.modules.users.dtoresponse.UserResponse;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import com.axis.hraiportal.modules.users.dtoresponse.LoginResponse;
 
@@ -20,6 +26,7 @@ import com.axis.hraiportal.modules.users.dtoresponse.LoginResponse;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final DocumentRepository documentRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -52,13 +59,13 @@ public class UserService {
 
     // ── Login — find by email, verify password ───────────────
     public Mono<LoginResponse> login(
-            String email, String password) {
+            String email, String password,String role) {
 
         return userRepository.findByEmail(email)
                 .flatMap(list -> {
                     if (list.isEmpty()) {
                         return Mono.error(new RuntimeException(
-                                "No account found with email: " + email));
+                                "Invalid Credentials"));
                     }
 
                     UserModel user = list.getFirst();
@@ -66,8 +73,10 @@ public class UserService {
                     if (!passwordEncoder.matches(
                             password, user.getPassword())) {
                         return Mono.error(new RuntimeException(
-                                "Incorrect password"));
+                                "Invalid Credentials"));
                     }
+
+                    if(!Objects.equals(user.getRole(), role)){return Mono.error(new RuntimeException("Invalid Credentials"));}
 
                     // generate JWT token
                     String token = jwtUtil.generateToken(
@@ -86,11 +95,48 @@ public class UserService {
                 });
     }
 
+    // GET candidate profile
+    public Mono<CandidateResponse> getCandidateById(String userId){
+        Mono<List<UserModel>> userMono =
+                userRepository.findByHrId(userId);
+
+        Mono<List<DocumentRecord>> docsMono =
+                documentRepository.findByUserId(userId);
+
+        return Mono.zip(userMono, docsMono)
+                .map(tuple -> {
+
+                    List<UserModel> users = tuple.getT1();
+                    List<DocumentRecord> docs = tuple.getT2();
+
+                    if (users.isEmpty()) {
+                        throw new RuntimeException(
+                                "User not found");
+                    }
+
+                    UserModel user = users.get(0);
+
+
+                    List<String> documentId = docs.stream()
+                            .map(DocumentRecord::getDocumentId)
+                            .toList();
+
+                    return CandidateResponse.builder()
+                            .userId(user.getUserId())
+                            .name(user.getName())
+                            .email(user.getEmail())
+                            .document_id(documentId)
+                            .build();
+                });
+
+    }
+
     // ─────────────────────────────────────────────
 // GET AUTHENTICATED HR PROFILE
 // ─────────────────────────────────────────────
     public Mono<UserResponse> getById(
             String userId) {
+
 
         return userRepository
 
@@ -104,6 +150,7 @@ public class UserService {
                                 new RuntimeException(
                                         "HR user not found"));
                     }
+
 
                     return Mono.just(
                             toResponse(
