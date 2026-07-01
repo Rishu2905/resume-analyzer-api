@@ -6,6 +6,8 @@ spring:
   data:
     mongodb:
       auto-index-creation: false
+  main:
+    allow-bean-definition-overriding: true
 
   servlet:
     multipart:
@@ -31,6 +33,7 @@ management:
       show-details: when-authorized
       probes:
         enabled: true
+
 
 supabase:
   url: ${SUPABASE_URL}
@@ -88,3 +91,8 @@ server:
 jwt:
   secret: ${JWT_SECRET}
   expiry: ${JWT_EXPIRY:86400000}
+
+ai:
+  service:
+    url: http://127.0.0.1:8000
+

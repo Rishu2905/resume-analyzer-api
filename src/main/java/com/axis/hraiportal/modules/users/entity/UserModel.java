@@ -34,6 +34,7 @@ public class UserModel {
     @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
 
+    @JsonProperty("role")
     private String role;
     @JsonProperty("is_deleted")
 

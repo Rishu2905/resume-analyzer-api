@@ -1,5 +1,6 @@
 package com.axis.hraiportal.modules.document.controller;
 
+import com.axis.hraiportal.modules.document.dto.response.CandidateDocumentResponse;
 import com.axis.hraiportal.modules.document.dto.response.DocumentResponse;
 import com.axis.hraiportal.modules.document.entity.DocumentRecord;
 import com.axis.hraiportal.modules.document.service.DocumentService;
@@ -28,6 +29,7 @@ public class DocumentController {
     // POST /api/documents/upload
     // multipart/form-data — not JSON
     // ─────────────────────────────────────────────
+
 // UPLOAD RESUME
 // POST /api/documents/upload
 // ─────────────────────────────────────────────
@@ -121,4 +123,26 @@ public class DocumentController {
 
                 .map(ResponseEntity::ok);
     }
+    @PostMapping(value="/upload-resume" ,consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<ResponseEntity<CandidateDocumentResponse>> resumeUpload(
+            @RequestPart("file")
+            FilePart file,
+            @RequestPart("job_title")
+            String jobTitle
+    ){return ReactiveSecurityContextHolder
+            .getContext()
+
+            .map(context ->
+                    context.getAuthentication()
+                            .getPrincipal()
+                            .toString())
+
+            .flatMap(userId ->
+                    documentService.candidateResumeUpload(
+
+                            userId,
+                            file,
+                            jobTitle))
+
+            .map(ResponseEntity::ok);}
 }

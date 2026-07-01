@@ -2,6 +2,7 @@ package com.axis.hraiportal.modules.document.service;
 
 import com.axis.hraiportal.common.client.GroqClient;
 import com.axis.hraiportal.common.util.PdfExtractorUtil;
+import com.axis.hraiportal.modules.document.dto.response.CandidateDocumentResponse;
 import com.axis.hraiportal.modules.document.dto.response.DocumentResponse;
 import com.axis.hraiportal.modules.document.entity.DocumentRecord;
 import com.axis.hraiportal.modules.document.repository.DocumentRepository;
@@ -27,7 +28,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DocumentService {
+public class DocumentService
+{
 
     private final ResumeRepository resumeRepository;
     private final DocumentRepository documentRepository;
@@ -210,6 +212,8 @@ public class DocumentService {
                 });
     }
 
+
+
     // ── System prompt ────────────────────────────────────────
     private String buildSystemPrompt() {
         return """
@@ -278,8 +282,8 @@ public class DocumentService {
             
             Scoring rules:
             - score is 0-100
-            - matching_skills: skills in resume that match JD
-            - gaps: important skills in JD missing from resume
+            - matching_skills: skills mentioned in projects or overall that match JD. Similar skills should be included too
+            - gaps: important skills in JD which are not present anywhere in resume
             - recommendation: whats the candidates ideal job type,is he fit for the job
             uploaded in JD?
             """.formatted(jobTitle, jobDescription, rawText);
@@ -460,4 +464,178 @@ public class DocumentService {
                     return Mono.just(resumes);
                 });
     }
-}
+    private String candidatePrompt(){
+        return """
+            You are an expert resume parser.
+            Given a resume, you will:
+            Parse the resume into structured data
+            Return ONLY valid JSON. No explanation, no markdown,
+            no code blocks. Just the raw JSON object.
+            Format:
+            {
+                "contact": {
+                    "name": "",
+                    "email": "",
+                    "phone": "",
+                    "location": ""
+                },
+                "summary": "",
+                "skills": [],
+                "experience": [
+                    {
+                        "company": "",
+                        "role": "",
+                        "duration": "",
+                        "description": ""
+                    }
+                ],
+                "projects": [
+                    {
+                        "name": "",
+                        "bullets": [],
+                        "technologies": []
+                    }
+                ],
+                "education": [
+                    {
+                        "institution": "",
+                        "degree": "",
+                        "year": ""
+                    }
+                ]
+            } resume text \n
+            """;}
+    public Mono<CandidateDocumentResponse> candidateResumeUpload(
+        String userId,FilePart file,String jobTitle){
+        log.debug("controller hit");
+        log.debug(jobTitle);
+    return DataBufferUtils
+
+            .join(file.content())
+
+            .flatMap(dataBuffer -> {
+                log.debug("reached parsing initilization");
+
+                byte[] pdfBytes =
+                        new byte[dataBuffer.readableByteCount()];
+
+                dataBuffer.read(pdfBytes);
+
+                DataBufferUtils.release(dataBuffer);
+
+                String rawText =
+                        pdfExtractorUtil.extractText(pdfBytes);
+                log.debug("parsing done");
+
+                String fileHash =
+                        pdfExtractorUtil.generateHash(pdfBytes);
+                log.debug("hashing done");
+
+                String filename =
+                        file.filename();
+                log.debug("sending to llm");
+                return groqClient
+                        .complete(
+
+                                candidatePrompt(),rawText)
+
+
+
+
+                        .flatMap(groqResponse -> {
+                            log.debug(" flatmap point reached");
+
+                            // Step 4 — parse Groq JSON response
+                            log.debug("groq parsing begin");
+                            ResumeDocument resumeDoc =
+
+                                    parseGroqResponse(
+                                            groqResponse,
+                                            filename);
+
+                            // Step 5 — save to MongoDB
+                            log.debug("saving to mongo");
+                            ResumeDocument saved =
+                                    resumeRepository
+                                            .save(resumeDoc);
+
+                            String mongoId =
+                                    saved.getId();
+
+//                                log.debug(
+//                                        "Resume saved to MongoDB: {}",
+//                                        mongoId);
+
+                            // Step 6 — save metadata to Supabase
+                            log.debug("step 6");
+                            DocumentRecord record =
+
+                                    DocumentRecord.builder()
+
+                                            .documentId(
+                                                    UUID.randomUUID()
+                                                            .toString())
+
+                                            .sessionId(
+                                                    null)
+
+                                            .userId(
+                                                    userId)
+
+                                            .filename(
+                                                    filename)
+
+                                            .fileHash(
+                                                    fileHash)
+
+                                            .mongoId(
+                                                    mongoId)
+
+                                            .jobTitle(
+                                                    jobTitle)
+
+                                            .score(
+                                                    null)
+
+                                            .recommendation(
+                                                    null)
+
+                                            .uploadedAt(
+                                                    LocalDateTime.now())
+
+                                            .build();
+                            log.debug("reached document repository");
+                            return documentRepository
+
+                                    .save(record)
+
+                                    .map(savedRecord ->
+
+
+                                            CandidateDocumentResponse
+
+                                                    .builder()
+
+                                                    .documentId(
+                                                            savedRecord
+                                                                    .getDocumentId())
+
+                                                    .userId(
+                                                            userId)
+
+                                                    .filename(
+                                                            filename)
+
+                                                    .mongoId(
+                                                            mongoId)
+                                                    .jobTitle(jobTitle)
+
+                                                    .message(
+                                                            "Resume processed and scored successfully")
+                                                    .uploadedAt(LocalDateTime.now())
+
+                                                    .build());
+            });
+
+});
+}}

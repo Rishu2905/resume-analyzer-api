@@ -22,8 +22,9 @@ public class UserRepository {
     public Mono<UserModel> save(UserModel hrUser) {
         return supabaseClient
                 .insert(TABLE, hrUser, UserModel.class)
-                .doOnSuccess(h -> log.info(
-                        "Registered HR user: {}", h.getEmail()));
+//                .doOnSuccess(h -> log.info(
+//                        "Registered HR user: {}", h.getEmail()))
+                ;
     }
 
     // ── Find HR user by ID ───────────────────────────────────
@@ -51,4 +52,10 @@ public class UserRepository {
                 updated,
                 UserModel.class);
     }
+//    public Mono<UserModel> findRoleById(String email){
+//        return supabaseClient.getWithFilter(
+//                TABLE,"email=eq."+email,
+//                UserModel.class
+//        );
+//    }
 }
